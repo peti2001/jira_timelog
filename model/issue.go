@@ -29,6 +29,20 @@ type Worklog struct {
 	Key              string
 }
 
+type Worklogs []*Worklog
+
+func (w Worklogs) Len() int {
+	return len(w)
+}
+
+func (w Worklogs) Less(i, j int) bool {
+	return w[i].Started < w[j].Started
+}
+
+func (w Worklogs) Swap(i, j int) {
+	w[i], w[j] = w[j], w[i]
+}
+
 type Author struct {
 	Name         string `json:"name"`
 	EmailAddress string `json:"emailAddress"`
