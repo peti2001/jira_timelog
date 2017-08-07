@@ -22,8 +22,7 @@ type WorklogResult struct {
 }
 
 func getWorkLogByFilter(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()       // parse arguments, you have to call this by yourself
-	fmt.Println(r.Form) // print form information in server side
+	r.ParseForm()
 	filterId, _ := r.Form["filterId"]
 	cookies, err := ioutil.ReadFile("./cookies.txt")
 	if err != nil {
@@ -64,8 +63,9 @@ func getWorkLogByFilter(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/getWorkLogByFilter", getWorkLogByFilter) // set router
-	err := http.ListenAndServe(":8080", nil)                   // set listen port
+	http.HandleFunc("/getWorkLogByFilter", getWorkLogByFilter)
+	fmt.Println("Start server")
+	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

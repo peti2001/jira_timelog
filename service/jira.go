@@ -34,6 +34,7 @@ func JiraApifactory(url string, cookiesText string) *jiraApi {
 }
 
 func (j *jiraApi) makeRequest(url string) ([]byte, error) {
+	log.Println("Make request: " + url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -59,7 +60,6 @@ func (j *jiraApi) makeRequest(url string) ([]byte, error) {
 }
 
 func (j *jiraApi) getFilterResult(url string) (*model.FilterResult, error) {
-	log.Println("Search issues: " + url)
 	ret, err := j.makeRequest(url)
 	if err != nil {
 		return nil, err
@@ -75,6 +75,9 @@ func (j *jiraApi) getFilterResult(url string) (*model.FilterResult, error) {
 
 func (j *jiraApi) GetIssuesByFilter(filterId string) ([]*model.Issue, error) {
 	ret, err := j.makeRequest(j.url + "/filter/" + filterId)
+	if err != nil {
+		return nil, err
+	}
 
 	var filter model.Filter
 	err = json.Unmarshal(ret, &filter)

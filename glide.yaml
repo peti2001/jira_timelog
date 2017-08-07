@@ -1,0 +1,6 @@
+package: github.com/peti2001/jira-time-log
+import: []
+testImport:
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
