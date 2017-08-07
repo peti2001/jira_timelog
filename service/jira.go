@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/peti2001/jira-time-log/model"
+	"sync"
+	"log"
 )
 
 type jiraApi struct {
@@ -26,13 +28,13 @@ func JiraApifactory(url string, cookiesText string) *jiraApi {
 	}
 
 	return &jiraApi{
-		url + "/rest/api/latest/issue/",
+		url + "/rest/api/2",
 		httpCookies,
 	}
 }
 
-func (j *jiraApi) GetIssue(key string) (*model.Issue, error) {
-	req, err := http.NewRequest("GET", j.url+key, nil)
+func (j *jiraApi) makeRequest(url string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -52,6 +54,74 @@ func (j *jiraApi) GetIssue(key string) (*model.Issue, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return ret, nil
+}
+
+func (j *jiraApi) getFilterResult(url string) (*model.FilterResult, error) {
+	log.Println("Search issues: " + url)
+	ret, err := j.makeRequest(url)
+	if err != nil {
+		return nil, err
+	}
+	var filterResult model.FilterResult
+	err = json.Unmarshal(ret, &filterResult)
+	if err != nil {
+		return nil, err
+	}
+
+	return &filterResult, nil
+}
+
+func (j *jiraApi) GetIssuesByFilter(filterId string) ([]*model.Issue, error) {
+	ret, err := j.makeRequest(j.url + "/filter/" + filterId)
+
+	var filter model.Filter
+	err = json.Unmarshal(ret, &filter)
+	if err != nil {
+		fmt.Println(string(ret))
+		return nil, err
+	}
+	wg := sync.WaitGroup{}
+	mutex := sync.Mutex{}
+	maxResult := 50
+	startsAt := 0
+	filterResult, err := j.getFilterResult(fmt.Sprintf("%s&startAt=0&maxResults=%d", filter.SearchUrl, maxResult))
+	issues := make([]*model.Issue, filterResult.Total)
+	i := 0
+	for startsAt < filterResult.Total {
+		filterResult, err = j.getFilterResult(fmt.Sprintf("%s&startAt=%d&maxResults=%d", filter.SearchUrl, startsAt, maxResult))
+		issueQueue := make(chan string, 15)
+
+		for _, issue := range filterResult.Issues {
+			if issue.Key == "" {
+				continue
+			}
+			wg.Add(1)
+			issueQueue <- issue.Key
+			go func(k string) {
+				issue, err := j.GetIssue(k)
+				if err != nil {
+					panic(err)
+				}
+				mutex.Lock()
+				issues[i] = issue
+				i++
+				mutex.Unlock()
+				wg.Done()
+				<-issueQueue
+			}(issue.Key)
+		}
+		wg.Wait()
+		startsAt += maxResult
+	}
+
+	return issues, nil
+}
+
+func (j *jiraApi) GetIssue(key string) (*model.Issue, error) {
+	ret, err := j.makeRequest(j.url + "/issue/" + key)
+
 	var jiraIssue model.Issue
 	err = json.Unmarshal(ret, &jiraIssue)
 	if err != nil {

@@ -23,6 +23,7 @@ type WorklogField struct {
 type Worklog struct {
 	TimeSpentSeconds int    `json:"timeSpentSeconds"`
 	Created          string `json:"created"`
+	Started          string `json:"started"`
 	Comment          string `json:"comment"`
 	Author           Author `json:"author"`
 	Key              string
