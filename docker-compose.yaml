@@ -2,6 +2,7 @@ version: '2'
 
 services:
   jira-time-log:
+    restart: always
     image: peti2001/jira-time-log
     ports:
       - "8080:8080"

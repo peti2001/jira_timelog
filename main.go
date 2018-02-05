@@ -40,7 +40,8 @@ func getWorkLogByFilter(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sheet := make(Result, 0)
-	for _, issue := range issues {
+	for i, issue := range issues {
+		fmt.Printf("%d - %s\n", i, issue.Key)
 		for _, worklog := range issue.Fields.Worklog.Worklogs {
 			sheet = append(
 				sheet,
@@ -59,6 +60,7 @@ func getWorkLogByFilter(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Write(jsonResp)
 }
 

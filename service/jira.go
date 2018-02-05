@@ -94,7 +94,7 @@ func (j *jiraApi) GetIssuesByFilter(filterId string) ([]*model.Issue, error) {
 	i := 0
 	for startsAt < filterResult.Total {
 		filterResult, err = j.getFilterResult(fmt.Sprintf("%s&startAt=%d&maxResults=%d", filter.SearchUrl, startsAt, maxResult))
-		issueQueue := make(chan string, 15)
+		issueQueue := make(chan string, 10)
 
 		for _, issue := range filterResult.Issues {
 			if issue.Key == "" {
@@ -105,7 +105,7 @@ func (j *jiraApi) GetIssuesByFilter(filterId string) ([]*model.Issue, error) {
 			go func(k string) {
 				issue, err := j.GetIssue(k)
 				if err != nil {
-					panic(err)
+					log.Println(err)
 				}
 				mutex.Lock()
 				issues[i] = issue
